@@ -75,11 +75,10 @@ void main()
   (GL41/glDrawArrays GL41/GL_TRIANGLES 0 3))
 
 (defn loop! [window]
-  (GL/createCapabilities)
   (GL41/glClearColor 0.2 0.3 0.3 1.0)
   (while (not (GLFW/glfwWindowShouldClose @window))
     (GL41/glClear (bit-or GL41/GL_COLOR_BUFFER_BIT GL41/GL_DEPTH_BUFFER_BIT))
-    (map #(render-triangle (first %) (second %)) @render-objects)
+    (run! #(render-triangle (first %) (second %)) @render-objects)
     (GLFW/glfwSwapBuffers @window)
     (GLFW/glfwPollEvents)))
 
@@ -114,9 +113,11 @@ void main()
                              (/ (- (.height vidmode) (.get p-height 0)) 2))))
 
   (GLFW/glfwMakeContextCurrent @window)
+  (GL/createCapabilities)
   (GLFW/glfwSwapInterval 1)
-  (create-triangle)
-  (GLFW/glfwShowWindow @window))
+  (GLFW/glfwShowWindow @window)
+  (GL/createCapabilities)
+  (create-triangle))
 
 (defn game-run! []
   (init! window)
