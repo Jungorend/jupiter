@@ -1,0 +1,11 @@
+{:paths ["src"]
+ :deps {org.lwjgl/lwjgl {:mvn/version "3.3.0"}
+        org.lwjgl/lwjgl-opengl {:mvn/version "3.3.0"}
+        org.lwjgl/lwjgl-glfw {:mvn/version "3.3.0"}}
+ :aliases
+ {:linux {:extra-deps {org.lwjgl/lwjgl$natives-linux {:mvn/version "3.3.0"}
+                       org.lwjgl/lwjgl-opengl$natives-linux {:mvn/version "3.3.0"}
+                       org.lwjgl/lwjgl-glfw$natives-linux {:mvn/version "3.3.0"}}}
+  :windows {:extra-deps {org.lwjgl/lwjgl$natives-windows {:mvn/version "3.3.0"}
+                         org.lwjgl/lwjgl-opengl$natives-windows {:mvn/version "3.3.0"}
+                         org.lwjgl/lwjgl-glfw$natives-windows {:mvn/version "3.3.0"}}}}}
