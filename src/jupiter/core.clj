@@ -51,6 +51,8 @@ void main()
   (Callbacks/glfwFreeCallbacks @window)
   (GLFW/glfwDestroyWindow @window)
   (GLFW/glfwTerminate)
+  (reset! render-objects [])
+  (reset! window nil)
   (.free (GLFW/glfwSetErrorCallback nil)))
 
 (defn push-vertex-data [vertices]
@@ -74,13 +76,16 @@ void main()
   (GL41/glBindVertexArray vertex-array)
   (GL41/glDrawArrays GL41/GL_TRIANGLES 0 3))
 
+(defn loop-body [window]
+  (GL41/glClear (bit-or GL41/GL_COLOR_BUFFER_BIT GL41/GL_DEPTH_BUFFER_BIT))
+  (run! #(render-triangle (first %) (second %)) @render-objects)
+  (GLFW/glfwSwapBuffers @window)
+  (GLFW/glfwPollEvents))
+
 (defn loop! [window]
   (GL41/glClearColor 0.2 0.3 0.3 1.0)
   (while (not (GLFW/glfwWindowShouldClose @window))
-    (GL41/glClear (bit-or GL41/GL_COLOR_BUFFER_BIT GL41/GL_DEPTH_BUFFER_BIT))
-    (run! #(render-triangle (first %) (second %)) @render-objects)
-    (GLFW/glfwSwapBuffers @window)
-    (GLFW/glfwPollEvents)))
+    (loop-body window)))
 
 (defn init! [window]
   (.set (GLFWErrorCallback/createPrint System/err))
