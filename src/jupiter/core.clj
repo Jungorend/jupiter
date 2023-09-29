@@ -40,15 +40,14 @@
 
 (defn create-triangle []
   (let [vao (push-vertex-data vertices indices)
-        program (shaders/make-program "tricolor.vs" "tricolor.fs")]
+        program (shaders/make-program! "tricolor.vs" "tricolor.fs")]
     (swap! render-objects conj [program vao])))
 
 (defn render-triangle [program vertex-array]
   (let [time-value (GLFW/glfwGetTime)
-        green-value (+ 0.5 (/ (Math/sin time-value) 2.0))
-        vertex-color-location (GL41/glGetUniformLocation program "ourColor")]
+        green-value (+ 0.5 (/ (Math/sin time-value) 2.0))]
     (GL41/glUseProgram program)
-    (GL41/glUniform4f vertex-color-location 0.0 green-value 0.0 1.0))
+    (shaders/set-uniform! program "ourColor" green-value))
   (GL41/glBindVertexArray vertex-array)
   (GL41/glDrawArrays GL41/GL_TRIANGLES 0 3))
 
