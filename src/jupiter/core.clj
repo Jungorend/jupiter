@@ -11,22 +11,33 @@
 (def vertex-source "#version 410 core
 layout (location = 0) in vec3 aPos;
 
+out vec4 vertexColor;
+
 void main()
 {
     gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    vertexColor = vec4(0.5, 0.0, 0.0, 1.0);
 }")
 
 (def fragment-source "#version 410 core
 out vec4 FragColor;
 
+in vec4 vertexColor;
+
 void main()
 {
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    FragColor = vertexColor;
 }")
 
-(def vertices (float-array [-0.5 -0.5 0.0
-                            0.5 -0.5 0.0
-                            0.0 0.5 0.0]))
+(def vertices (float-array [0.5 0.5 0.0
+                            0.5 0.0 0.0
+                            0.0 0.5 0.0
+
+                            -0.5 0.5 0.0
+                            -0.5 0 0.0]))
+
+(def indices (int-array [0 1 2
+                         2 3 4]))
 
 (defn make-shader [source type]
   (let [shader (GL41/glCreateShader type)]
@@ -55,18 +66,21 @@ void main()
   (reset! window nil)
   (.free (GLFW/glfwSetErrorCallback nil)))
 
-(defn push-vertex-data [vertices]
+(defn push-vertex-data [vertices indices]
   (let [vao (GL41/glGenVertexArrays)
-        vbo (GL41/glGenBuffers)]
+        vbo (GL41/glGenBuffers)
+        ebo (GL41/glGenBuffers)]
     (GL41/glBindVertexArray vao)
     (GL41/glBindBuffer GL41/GL_ARRAY_BUFFER vbo)
     (GL41/glBufferData GL41/GL_ARRAY_BUFFER vertices GL41/GL_STATIC_DRAW)
+    (GL41/glBindBuffer GL41/GL_ELEMENT_ARRAY_BUFFER ebo)
+    (GL41/glBufferData GL41/GL_ELEMENT_ARRAY_BUFFER indices GL41/GL_STATIC_DRAW)
     (GL41/glVertexAttribPointer 0 3 GL41/GL_FLOAT false (* 3 Float/BYTES) 0)
     (GL41/glEnableVertexAttribArray 0)
     vao))
 
 (defn create-triangle []
-  (let [vao (push-vertex-data vertices)
+  (let [vao (push-vertex-data vertices indices)
         program (make-program (make-shader vertex-source GL41/GL_VERTEX_SHADER)
                               (make-shader fragment-source GL41/GL_FRAGMENT_SHADER))]
     (swap! render-objects conj [program vao])))
@@ -74,7 +88,7 @@ void main()
 (defn render-triangle [program vertex-array]
   (GL41/glUseProgram program)
   (GL41/glBindVertexArray vertex-array)
-  (GL41/glDrawArrays GL41/GL_TRIANGLES 0 3))
+  (GL41/glDrawElements GL41/GL_TRIANGLES (count indices) GL41/GL_UNSIGNED_INT 0))
 
 (defn loop-body [window]
   (GL41/glClear (bit-or GL41/GL_COLOR_BUFFER_BIT GL41/GL_DEPTH_BUFFER_BIT))
