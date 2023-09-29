@@ -3,57 +3,17 @@
            [org.lwjgl.glfw GLFWErrorCallback GLFWKeyCallback GLFWKeyCallbackI Callbacks GLFW]
            [org.lwjgl.opengl GL GL41]
            [org.lwjgl.system MemoryStack MemoryUtil])
+  (:require [jupiter.shaders :as shaders])
   (:gen-class))
 
 (def window (atom nil))
 (def render-objects (atom []))
-
-(def vertex-source "#version 410 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-
-out vec3 ourColor;
-
-void main()
-{
-    gl_Position = vec4(aPos, 1.0);
-    ourColor = aColor;
-}")
-
-(def fragment-source "#version 410 core
-out vec4 FragColor;
-in vec3 ourColor;
-
-
-void main()
-{
-    FragColor = vec4(ourColor, 1.0);
-}")
 
 (def vertices (float-array [0.5 -0.5 0.0 1.0 0.0 0.0
                             -0.5 -0.5 0.0 0.0 1.0 0.0
                             0.0 0.5 0.0 0.0 0.0 1.0]))
 
 (def indices (int-array [0 1 2]))
-
-(defn make-shader [source type]
-  (let [shader (GL41/glCreateShader type)]
-    (GL41/glShaderSource shader source)
-    (GL41/glCompileShader shader)
-    (when (= GL41/GL_FALSE (GL41/glGetShaderi shader GL41/GL_COMPILE_STATUS))
-      (throw (Exception. (GL41/glGetShaderInfoLog shader 1024))))
-    shader))
-
-(defn make-program [vertex-shader fragment-shader]
-  (let [program (GL41/glCreateProgram)]
-    (GL41/glAttachShader program vertex-shader)
-    (GL41/glAttachShader program fragment-shader)
-    (GL41/glLinkProgram program)
-    (when (= GL41/GL_FALSE (GL41/glGetProgrami program GL41/GL_LINK_STATUS))
-      (throw (Exception. (GL41/glGetProgramInfoLog program 1024))))
-    (GL41/glDeleteShader vertex-shader)
-    (GL41/glDeleteShader fragment-shader)
-    program))
 
 (defn free! [window]
   (Callbacks/glfwFreeCallbacks @window)
@@ -80,8 +40,7 @@ void main()
 
 (defn create-triangle []
   (let [vao (push-vertex-data vertices indices)
-        program (make-program (make-shader vertex-source GL41/GL_VERTEX_SHADER)
-                              (make-shader fragment-source GL41/GL_FRAGMENT_SHADER))]
+        program (shaders/make-program "tricolor.vs" "tricolor.fs")]
     (swap! render-objects conj [program vao])))
 
 (defn render-triangle [program vertex-array]
