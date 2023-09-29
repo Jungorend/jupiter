@@ -10,34 +10,31 @@
 
 (def vertex-source "#version 410 core
 layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aColor;
 
-out vec4 vertexColor;
+out vec3 ourColor;
 
 void main()
 {
-    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    vertexColor = vec4(0.5, 0.0, 0.0, 1.0);
+    gl_Position = vec4(aPos, 1.0);
+    ourColor = aColor;
 }")
 
 (def fragment-source "#version 410 core
 out vec4 FragColor;
+in vec3 ourColor;
 
-in vec4 vertexColor;
 
 void main()
 {
-    FragColor = vertexColor;
+    FragColor = vec4(ourColor, 1.0);
 }")
 
-(def vertices (float-array [0.5 0.5 0.0
-                            0.5 0.0 0.0
-                            0.0 0.5 0.0
+(def vertices (float-array [0.5 -0.5 0.0 1.0 0.0 0.0
+                            -0.5 -0.5 0.0 0.0 1.0 0.0
+                            0.0 0.5 0.0 0.0 0.0 1.0]))
 
-                            -0.5 0.5 0.0
-                            -0.5 0 0.0]))
-
-(def indices (int-array [0 1 2
-                         2 3 4]))
+(def indices (int-array [0 1 2]))
 
 (defn make-shader [source type]
   (let [shader (GL41/glCreateShader type)]
@@ -73,10 +70,12 @@ void main()
     (GL41/glBindVertexArray vao)
     (GL41/glBindBuffer GL41/GL_ARRAY_BUFFER vbo)
     (GL41/glBufferData GL41/GL_ARRAY_BUFFER vertices GL41/GL_STATIC_DRAW)
-    (GL41/glBindBuffer GL41/GL_ELEMENT_ARRAY_BUFFER ebo)
-    (GL41/glBufferData GL41/GL_ELEMENT_ARRAY_BUFFER indices GL41/GL_STATIC_DRAW)
-    (GL41/glVertexAttribPointer 0 3 GL41/GL_FLOAT false (* 3 Float/BYTES) 0)
+    ;(GL41/glBindBuffer GL41/GL_ELEMENT_ARRAY_BUFFER ebo)
+    ;(GL41/glBufferData GL41/GL_ELEMENT_ARRAY_BUFFER indices GL41/GL_STATIC_DRAW)
+    (GL41/glVertexAttribPointer 0 3 GL41/GL_FLOAT false (* 6 Float/BYTES) 0)
     (GL41/glEnableVertexAttribArray 0)
+    (GL41/glVertexAttribPointer 1 3 GL41/GL_FLOAT false (* 6 Float/BYTES) (* 3 Float/BYTES))
+    (GL41/glEnableVertexAttribArray 1)
     vao))
 
 (defn create-triangle []
@@ -86,9 +85,13 @@ void main()
     (swap! render-objects conj [program vao])))
 
 (defn render-triangle [program vertex-array]
-  (GL41/glUseProgram program)
+  (let [time-value (GLFW/glfwGetTime)
+        green-value (+ 0.5 (/ (Math/sin time-value) 2.0))
+        vertex-color-location (GL41/glGetUniformLocation program "ourColor")]
+    (GL41/glUseProgram program)
+    (GL41/glUniform4f vertex-color-location 0.0 green-value 0.0 1.0))
   (GL41/glBindVertexArray vertex-array)
-  (GL41/glDrawElements GL41/GL_TRIANGLES (count indices) GL41/GL_UNSIGNED_INT 0))
+  (GL41/glDrawArrays GL41/GL_TRIANGLES 0 3))
 
 (defn loop-body [window]
   (GL41/glClear (bit-or GL41/GL_COLOR_BUFFER_BIT GL41/GL_DEPTH_BUFFER_BIT))
