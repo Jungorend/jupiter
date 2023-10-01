@@ -9,7 +9,7 @@
 
 (def window (atom nil))
 (def render-objects (atom []))
-(def texture (atom nil))
+(def textures (atom {}))
 
 (def vertices (float-array [0.5 0.5 0.0, 1.0 0.0 0.0, 1.0 1.0
                             0.5 -0.5 0.0, 0.0 1.0, 0.0, 1.0 0.0
@@ -19,17 +19,21 @@
 (def indices (int-array [0 1 3
                          1 2 3]))
 
-(defn load-texture [texture-name]
+(defn load-texture [texture-name type]
+  (STBImage/stbi_set_flip_vertically_on_load true)
   (with-open [stack (MemoryStack/stackPush)]
     (let [width (.mallocInt stack 1)
           height (.mallocInt stack 1)
           num-of-channels (.mallocInt stack 1)
+          color-type (case type
+                       :png GL41/GL_RGBA
+                       GL41/GL_RGB)
           data (STBImage/stbi_load (str "resources/images/" texture-name) width height num-of-channels 0)
           texture (GL41/glGenTextures)]
       (if data
         (do
           (GL41/glBindTexture GL41/GL_TEXTURE_2D texture)
-          (GL41/glTexImage2D GL41/GL_TEXTURE_2D 0 GL41/GL_RGB (.get width) (.get height) 0 GL41/GL_RGB GL41/GL_UNSIGNED_BYTE data)
+          (GL41/glTexImage2D GL41/GL_TEXTURE_2D 0 GL41/GL_RGB (.get width) (.get height) 0 color-type GL41/GL_UNSIGNED_BYTE data)
           (GL41/glGenerateMipmap GL41/GL_TEXTURE_2D)
           (STBImage/stbi_image_free data)
           texture)
@@ -40,6 +44,8 @@
   (GLFW/glfwDestroyWindow @window)
   (GLFW/glfwTerminate)
   (reset! render-objects [])
+  (run! #(GL41/glDeleteTextures %) (vals @textures))
+  (reset! textures {})
   (reset! window nil)
   (.free (GLFW/glfwSetErrorCallback nil)))
 
@@ -63,6 +69,9 @@
 (defn create-triangle []
   (let [vao (push-vertex-data vertices indices)
         program (shaders/make-program! "tricolor.vs" "tricolor.fs")]
+    (GL41/glUseProgram program)
+    (shaders/set-uniform! program "texture1" 0)
+    (shaders/set-uniform! program "texture2" 1)
     (swap! render-objects conj [program vao])))
 
 (defn render-triangle [program vertex-array]
@@ -71,7 +80,9 @@
     (GL41/glUseProgram program)
     (shaders/set-uniform! program "ourColor" green-value))
   (GL41/glActiveTexture GL41/GL_TEXTURE0)
-  (GL41/glBindTexture GL41/GL_TEXTURE_2D @texture)
+  (GL41/glBindTexture GL41/GL_TEXTURE_2D (:container @textures))
+  (GL41/glActiveTexture GL41/GL_TEXTURE1)
+  (GL41/glBindTexture GL41/GL_TEXTURE_2D (:face @textures))
   (GL41/glBindVertexArray vertex-array)
   (GL41/glDrawElements GL41/GL_TRIANGLES 6 GL41/GL_UNSIGNED_INT 0))
 
@@ -121,7 +132,9 @@
   (GLFW/glfwSwapInterval 1)
   (GLFW/glfwShowWindow @window)
   (GL/createCapabilities)
-  (reset! texture (load-texture "container.jpg"))
+  (swap! textures assoc
+         :container (load-texture "container.jpg" :jpg)
+         :face (load-texture "awesomeFace.png" :png))
   (create-triangle))
 
 (defn game-run! []
