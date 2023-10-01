@@ -16,11 +16,8 @@
                             -0.5 -0.5 0.0, 0.0 0.0 1.0, 0.0 0.0
                             -0.5 0.5 0.0, 1.0 1.0 0.0, 0.0 1.0]))
 
-(def tex-coords(float-array [0.0 0.0
-                             1.0 0.0
-                             0.5 1.0]))
-
-(def indices (int-array [0 1 2]))
+(def indices (int-array [0 1 3
+                         1 2 3]))
 
 (defn load-texture [texture-name]
   (with-open [stack (MemoryStack/stackPush)]
@@ -32,7 +29,6 @@
       (if data
         (do
           (GL41/glBindTexture GL41/GL_TEXTURE_2D texture)
-          (println (type data))
           (GL41/glTexImage2D GL41/GL_TEXTURE_2D 0 GL41/GL_RGB (.get width) (.get height) 0 GL41/GL_RGB GL41/GL_UNSIGNED_BYTE data)
           (GL41/glGenerateMipmap GL41/GL_TEXTURE_2D)
           (STBImage/stbi_image_free data)
@@ -54,8 +50,8 @@
     (GL41/glBindVertexArray vao)
     (GL41/glBindBuffer GL41/GL_ARRAY_BUFFER vbo)
     (GL41/glBufferData GL41/GL_ARRAY_BUFFER vertices GL41/GL_STATIC_DRAW)
-    ;(GL41/glBindBuffer GL41/GL_ELEMENT_ARRAY_BUFFER ebo)
-    ;(GL41/glBufferData GL41/GL_ELEMENT_ARRAY_BUFFER indices GL41/GL_STATIC_DRAW)
+    (GL41/glBindBuffer GL41/GL_ELEMENT_ARRAY_BUFFER ebo)
+    (GL41/glBufferData GL41/GL_ELEMENT_ARRAY_BUFFER indices GL41/GL_STATIC_DRAW)
     (GL41/glVertexAttribPointer 0 3 GL41/GL_FLOAT false (* 8 Float/BYTES) 0)
     (GL41/glEnableVertexAttribArray 0)
     (GL41/glVertexAttribPointer 1 3 GL41/GL_FLOAT false (* 8 Float/BYTES) (* 3 Float/BYTES))
@@ -74,6 +70,7 @@
         green-value (+ 0.5 (/ (Math/sin time-value) 2.0))]
     (GL41/glUseProgram program)
     (shaders/set-uniform! program "ourColor" green-value))
+  (GL41/glActiveTexture GL41/GL_TEXTURE0)
   (GL41/glBindTexture GL41/GL_TEXTURE_2D @texture)
   (GL41/glBindVertexArray vertex-array)
   (GL41/glDrawElements GL41/GL_TRIANGLES 6 GL41/GL_UNSIGNED_INT 0))
@@ -124,7 +121,7 @@
   (GLFW/glfwSwapInterval 1)
   (GLFW/glfwShowWindow @window)
   (GL/createCapabilities)
-  (reset! texture (load-texture "wall.jpg"))
+  (reset! texture (load-texture "container.jpg"))
   (create-triangle))
 
 (defn game-run! []
