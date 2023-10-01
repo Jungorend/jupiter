@@ -2,7 +2,8 @@
  :deps {org.lwjgl/lwjgl {:mvn/version "3.3.0"}
         org.lwjgl/lwjgl-opengl {:mvn/version "3.3.0"}
         org.lwjgl/lwjgl-glfw {:mvn/version "3.3.0"}
-        org.lwjgl/lwjgl-stb {:mvn/version "3.3.0"}}
+        org.lwjgl/lwjgl-stb {:mvn/version "3.3.0"}
+        net.mikera/vectorz-clj {:mvn/version "0.48.0"}}
  :aliases
  {:linux {:extra-deps {org.lwjgl/lwjgl$natives-linux {:mvn/version "3.3.0"}
                        org.lwjgl/lwjgl-opengl$natives-linux {:mvn/version "3.3.0"}

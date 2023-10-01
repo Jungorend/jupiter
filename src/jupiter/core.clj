@@ -4,8 +4,11 @@
            [org.lwjgl.opengl GL GL41]
            [org.lwjgl.stb STBImage]
            [org.lwjgl.system MemoryStack MemoryUtil])
-  (:require [jupiter.shaders :as shaders])
+  (:require [jupiter.shaders :as shaders]
+            [clojure.core.matrix :as mat])
   (:gen-class))
+
+(mat/set-current-implementation :vectorz)
 
 (def window (atom nil))
 (def render-objects (atom []))
